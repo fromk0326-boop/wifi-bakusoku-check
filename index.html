@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wi-Fi設定ボトルネック診断 | その回線、まだ速くなる</title>
+<meta name="description" content="ルーターを買い替える前に。今の機材のまま、設定に埋まったボトルネックを見つけて直す無料診断ツール。データはブラウザ内だけで解析し、どこにも送信しない。">
+<meta property="og:title" content="Wi-Fi設定ボトルネック診断 | その回線、まだ速くなる">
+<meta property="og:description" content="ルーターを買い替える前に。今の機材のまま、設定に埋まったボトルネックを見つけて直す無料診断ツール。データはブラウザ内だけで解析し、どこにも送信しない。">
+<meta property="og:type" content="website">
+<style>
+  :root {
+    --accent: #0F6E56;
+    --accent-bg: #E1F5EE;
+    --warn: #B4690E;
+    --warn-bg: #FCF0DF;
+    --text: #1A1A1A;
+    --text-sub: #5A6B66;
+    --border: #DDE7E3;
+    --bg: #FFFFFF;
+    --bg-alt: #F7FAF9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+  section { margin-top: 48px; }
+  section:first-of-type { margin-top: 0; }
+
+  .label-tag {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-bg);
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-size: 32px;
+    line-height: 1.4;
+    margin: 0 0 16px;
+    font-weight: 700;
+  }
+  .lead {
+    font-size: 16px;
+    color: var(--text);
+    margin: 0 0 12px;
+  }
+  .sub-note {
+    font-size: 13px;
+    color: var(--text-sub);
+    display: block;
+  }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 20px;
+    border-left: 4px solid var(--accent);
+    padding-left: 12px;
+  }
+
+  .card {
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .step-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+  .step-title {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .step-desc {
+    font-size: 14px;
+    color: var(--text-sub);
+    margin: 0 0 14px;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 700;
+    width: 100%;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-secondary {
+    background: #fff;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .btn-secondary:hover { background: var(--accent-bg); }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  input[type="number"], select, textarea {
+    font-family: inherit;
+    font-size: 15px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    background: #fff;
+  }
+  input[type="number"] {
+    flex: 1;
+    min-width: 0;
+  }
+  select { flex-shrink: 0; }
+
+  .os-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .os-tab {
+    flex: 1;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-sub);
+  }
+  .os-tab.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .os-panel { display: none; }
+  .os-panel.active { display: block; }
+
+  .code-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: #1E2622;
+    color: #E8F5F0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+    font-size: 13px;
+    overflow-x: auto;
+    margin: 10px 0 14px;
+  }
+  .code-block code { white-space: pre; }
+  .prompt-block {
+    background: #1E2622;
+    color: #E8F5F0;
+    border-radius: 8px;
+    padding: 16px;
+    font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+    font-size: 12.5px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    margin: 10px 0 14px;
+  }
+  .copy-btn {
+    background: transparent;
+    border: 1px solid #48584F;
+    color: #E8F5F0;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .copy-btn:hover { background: #2E3A34; }
+  .copy-btn-block {
+    display: block;
+    margin-left: auto;
+    margin-bottom: 10px;
+  }
+
+  textarea#pasteArea {
+    width: 100%;
+    min-height: 180px;
+    resize: vertical;
+    font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+    font-size: 13px;
+  }
+
+  #resultArea { display: none; }
+
+  .result-card {
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+  .result-card.warn {
+    background: var(--warn-bg);
+    border-color: #EAD3AC;
+  }
+  .result-card.ok {
+    background: var(--accent-bg);
+    border-color: #B9E3D2;
+  }
+  .result-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+  .result-card.warn .result-title { color: var(--warn); }
+  .result-card.ok .result-title { color: var(--accent); }
+  .result-desc {
+    font-size: 14px;
+    margin: 0 0 10px;
+  }
+  .result-fix {
+    font-size: 14px;
+    margin: 0;
+    padding-left: 20px;
+  }
+  .result-fix li { margin-bottom: 4px; }
+
+  table.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  table.info-table th, table.info-table td {
+    text-align: left;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.info-table th {
+    color: var(--text-sub);
+    font-weight: 600;
+    width: 40%;
+  }
+
+  .share-row { margin-top: 20px; text-align: center; }
+  .btn-share {
+    display: inline-block;
+    background: #fff;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .btn-share:hover { background: var(--accent-bg); }
+
+  .example-card {
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .example-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 6px;
+  }
+  .example-num {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .example-desc {
+    font-size: 14px;
+    color: var(--text-sub);
+    margin: 0;
+  }
+  .example-closing {
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-sub);
+  }
+  footer p { margin: 4px 0; }
+  footer a { color: var(--accent); }
+
+  .parse-fail {
+    background: var(--warn-bg);
+    border: 1px solid #EAD3AC;
+    border-radius: 12px;
+    padding: 18px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section>
+    <span class="label-tag">設定ボトルネック診断（無料・データ送信なし）</span>
+    <h1>その回線、まだ速くなる。</h1>
+    <p class="lead">ルーターを買い替える前に。今の機材のまま、設定に埋まったボトルネックを見つけて直す診断ツール。</p>
+    <small class="sub-note">貼り付けた内容はブラウザの中だけで解析。どこにも送信しない。</small>
+  </section>
+
+  <section>
+    <h2>診断の進め方</h2>
+
+    <div class="step-card">
+      <div class="step-title"><span class="step-num">1</span>速度を測る</div>
+      <p class="step-desc">まず今の実力を測る。下のボタンでfast.comを開いて、出た数字をメモ。</p>
+      <button class="btn-primary" id="fastComBtn" type="button">fast.comで測る</button>
+      <div class="input-row">
+        <input type="number" id="speedInput" placeholder="実測ダウンロード速度" min="0" step="0.1">
+        <select id="speedUnit">
+          <option value="Mbps">Mbps</option>
+          <option value="Gbps">Gbps</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-title"><span class="step-num">2</span>接続情報を取る</div>
+      <div class="os-tabs">
+        <button class="os-tab active" id="tabWin" type="button">Windows</button>
+        <button class="os-tab" id="tabMac" type="button">Mac</button>
+      </div>
+      <div class="os-panel active" id="panelWin">
+        <p class="step-desc">スタートボタンを右クリック →「ターミナル」を開いて、下のコマンドを貼り付けてEnter。</p>
+        <div class="code-block">
+          <code>netsh wlan show interfaces</code>
+          <button class="copy-btn" data-copy="netsh wlan show interfaces" type="button">コピー</button>
+        </div>
+      </div>
+      <div class="os-panel" id="panelMac">
+        <p class="step-desc">「ターミナル」アプリ（アプリケーション → ユーティリティ）を開いて、下のコマンドを貼り付けてEnter。</p>
+        <div class="code-block">
+          <code>system_profiler SPAirPortDataType</code>
+          <button class="copy-btn" data-copy="system_profiler SPAirPortDataType" type="button">コピー</button>
+        </div>
+      </div>
+      <p class="step-desc" style="margin-top:10px;">出てきた結果を全部コピーして、下に貼り付け。</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-title"><span class="step-num">3</span>貼り付けて診断</div>
+      <textarea id="pasteArea" placeholder="ここにコマンドの結果を貼り付け"></textarea>
+      <button class="btn-primary" id="diagnoseBtn" type="button" style="margin-top:12px;">診断する</button>
+    </div>
+  </section>
+
+  <section id="resultArea">
+    <h2>診断結果</h2>
+    <div id="resultCards"></div>
+
+    <h2 style="margin-top:32px;">接続情報の読み取り結果</h2>
+    <div class="card">
+      <table class="info-table" id="infoTable"></table>
+    </div>
+
+    <div class="share-row">
+      <a class="btn-share" id="shareBtn" href="#" target="_blank" rel="noopener">診断結果をポストする</a>
+    </div>
+  </section>
+
+  <section>
+    <h2>この診断で実際に見つかったボトルネック</h2>
+
+    <div class="example-card">
+      <p class="example-title">ルーターのファームウェア未更新</p>
+      <p class="example-desc"><span class="example-num">1階のノートPC: 1Gbps → 1.5Gbps。</span><br>リンク速度の受信だけが異常に低く、更新1回で解消。</p>
+    </div>
+
+    <div class="example-card">
+      <p class="example-title">2.4GHz帯への吸着</p>
+      <p class="example-desc"><span class="example-num">2階のノートPC: 320Mbps → 750Mbps。</span><br>強い5GHzが目の前にあるのに、PCが2.4GHzを掴んだまま。優先バンドの設定変更だけで2.3倍。</p>
+    </div>
+
+    <div class="example-card">
+      <p class="example-title">中継器のIP迷子</p>
+      <p class="example-desc">管理画面に入れない原因はIPアドレスの変更。ルーターのメッシュデバイス一覧から現在地を特定。</p>
+    </div>
+
+    <p class="example-closing">3件とも、原因はぜんぶ設定の中にあった。機材は1つも買っていない。</p>
+  </section>
+
+  <section>
+    <h2>AIに丸ごと任せたい人へ</h2>
+    <p class="lead">Claude Codeが使えるなら、診断から設定変更の実行までAIに任せられる。下のプロンプトを貼るだけ。</p>
+    <button class="copy-btn copy-btn-block" id="copyPromptBtn" type="button" style="color:var(--accent); border-color:var(--accent);">コピー</button>
+    <div class="prompt-block" id="promptBlock">あなたは家庭内ネットワークの診断担当です。私のPCのWi-Fiを、今の機材のまま最速にしてください。
+
+進め方:
+1. 現状把握。OSに応じて接続情報を取得（Windows: netsh wlan show interfaces / Mac: system_profiler SPAirPortDataType）。実測速度は私がfast.comで測って報告する
+2. リンク速度と実測の差からボトルネックを特定する（周波数帯の吸着、ファームウェア、チャネル幅、ローミング設定、中継器の状態）
+3. 機材を買わずに設定だけでできる改善を提案し、私の承認を得てから1つずつ実行する
+4. 改善のたびに再測定して、前後を数字で比較する
+
+注意:
+- ルーターや中継器のパスワードは私が入力する。あなたはログイン画面まで案内して待つこと
+- 設定を変える前に、必ず変更前の値を控えること
+- 買い替えの提案は最後。まず設定を疑うこと</div>
+  </section>
+
+  <footer>
+    <p>作った人: 畠山謙人（税理士・公認会計士）<br><a href="https://x.com/kandmybike" target="_blank" rel="noopener">@kandmybike</a></p>
+    <p>このサイトは診断結果の正確性を保証するものではない。設定変更は自己責任で。</p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  document.getElementById("fastComBtn").addEventListener("click", function () {
+    window.open("https://fast.com", "_blank", "noopener");
+  });
+
+  var tabWin = document.getElementById("tabWin");
+  var tabMac = document.getElementById("tabMac");
+  var panelWin = document.getElementById("panelWin");
+  var panelMac = document.getElementById("panelMac");
+
+  tabWin.addEventListener("click", function () {
+    tabWin.classList.add("active");
+    tabMac.classList.remove("active");
+    panelWin.classList.add("active");
+    panelMac.classList.remove("active");
+  });
+  tabMac.addEventListener("click", function () {
+    tabMac.classList.add("active");
+    tabWin.classList.remove("active");
+    panelMac.classList.add("active");
+    panelWin.classList.remove("active");
+  });
+
+  function copyText(text, btn) {
+    var original = btn.textContent;
+    navigator.clipboard.writeText(text).then(function () {
+      btn.textContent = "コピーした";
+      setTimeout(function () { btn.textContent = original; }, 1500);
+    }).catch(function () {
+      /* クリップボード権限がない環境では静かに失敗 */
+    });
+  }
+
+  document.querySelectorAll(".copy-btn[data-copy]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      copyText(btn.getAttribute("data-copy"), btn);
+    });
+  });
+
+  document.getElementById("copyPromptBtn").addEventListener("click", function () {
+    var btn = document.getElementById("copyPromptBtn");
+    copyText(document.getElementById("promptBlock").textContent, btn);
+  });
+
+  // ---- 診断ロジック ----
+
+  function toMbps(value, unit) {
+    if (value === null || isNaN(value)) return null;
+    return unit === "Gbps" ? value * 1000 : value;
+  }
+
+  function bandFromChannel(channelNum) {
+    if (channelNum === null) return null;
+    if (channelNum >= 1 && channelNum <= 14) return "2.4GHz";
+    if (channelNum >= 32 && channelNum <= 177) return "5GHz";
+    return null;
+  }
+
+  function parseWindows(text) {
+    var info = {
+      ssid: null, phy: null, channel: null, band: null, bandwidth: null,
+      rxRate: null, txRate: null, signalPct: null, rssi: null
+    };
+
+    var ssidMatch = text.match(/^\s*SSID\s*[:：]\s*(.+)$/mi);
+    if (ssidMatch) info.ssid = ssidMatch[1].trim();
+
+    var radioMatch = text.match(/(?:無線の種類|Radio type)\s*[:：]\s*(.+)$/mi);
+    if (radioMatch) {
+      var r = radioMatch[1];
+      if (/be/i.test(r)) info.phy = "802.11be";
+      else if (/ax/i.test(r)) info.phy = "802.11ax";
+      else if (/ac/i.test(r)) info.phy = "802.11ac";
+      else if (/n/i.test(r)) info.phy = "802.11n";
+      else info.phy = r.trim();
+    }
+
+    var bandMatch = text.match(/Band\s*[:：]\s*(6\s*GHz|5\s*GHz|2\.4\s*GHz)/i);
+    if (bandMatch) {
+      var b = bandMatch[1].replace(/\s+/g, "");
+      info.band = b;
+    }
+
+    var channelMatch = text.match(/(?:チャネル|Channel)\s*[:：]\s*(\d+)/i);
+    if (channelMatch) {
+      info.channel = parseInt(channelMatch[1], 10);
+      if (!info.band) info.band = bandFromChannel(info.channel);
+    }
+
+    var rxMatch = text.match(/(?:受信速度|Receive rate)\s*\(Mbps\)\s*[:：]\s*([\d.]+)/i);
+    if (rxMatch) info.rxRate = parseFloat(rxMatch[1]);
+
+    var txMatch = text.match(/(?:送信速度|Transmit rate)\s*\(Mbps\)\s*[:：]\s*([\d.]+)/i);
+    if (txMatch) info.txRate = parseFloat(txMatch[1]);
+
+    var sigMatch = text.match(/(?:シグナル|Signal)\s*[:：]\s*(\d+)\s*%/i);
+    if (sigMatch) info.signalPct = parseInt(sigMatch[1], 10);
+
+    var rssiMatch = text.match(/RSSI\s*[:：]\s*(-?\d+)/i);
+    if (rssiMatch) info.rssi = parseInt(rssiMatch[1], 10);
+
+    var bwMatch = text.match(/(?:チャネル幅|Channel width|BW)\s*[:：]\s*(\d+)\s*MHz/i);
+    if (bwMatch) info.bandwidth = parseInt(bwMatch[1], 10);
+
+    var hasData = info.ssid || info.phy || info.channel || info.rxRate || info.txRate || info.signalPct;
+    return hasData ? info : null;
+  }
+
+  function parseMac(text) {
+    var info = {
+      ssid: null, phy: null, channel: null, band: null, bandwidth: null,
+      rxRate: null, txRate: null, signalPct: null, rssi: null
+    };
+
+    var sectionMatch = text.match(/Current Network Information:?([\s\S]*)/i);
+    var scope = sectionMatch ? sectionMatch[1] : text;
+
+    var ssidMatch = scope.match(/^\s*([^\s:][^:]*):\s*$/m);
+    if (ssidMatch) info.ssid = ssidMatch[1].trim();
+
+    var phyMatch = scope.match(/PHY Mode\s*:\s*(.+)$/mi);
+    if (phyMatch) {
+      var p = phyMatch[1];
+      if (/be/i.test(p)) info.phy = "802.11be";
+      else if (/ax/i.test(p)) info.phy = "802.11ax";
+      else if (/ac/i.test(p)) info.phy = "802.11ac";
+      else if (/n/i.test(p)) info.phy = "802.11n";
+      else info.phy = p.trim();
+    }
+
+    var channelMatch = scope.match(/Channel\s*:\s*(\d+)\s*(?:\(([^,)]+),?\s*(\d+)MHz\)?)?/i);
+    if (channelMatch) {
+      info.channel = parseInt(channelMatch[1], 10);
+      if (channelMatch[2]) {
+        info.band = channelMatch[2].replace(/\s+/g, "");
+      } else {
+        info.band = bandFromChannel(info.channel);
+      }
+      if (channelMatch[3]) info.bandwidth = parseInt(channelMatch[3], 10);
+    }
+
+    var sigNoiseMatch = scope.match(/Signal\s*\/\s*Noise\s*:\s*(-?\d+)\s*dBm\s*\/\s*(-?\d+)\s*dBm/i);
+    if (sigNoiseMatch) info.rssi = parseInt(sigNoiseMatch[1], 10);
+
+    var txMatch = scope.match(/Transmit Rate\s*:\s*([\d.]+)/i);
+    if (txMatch) info.txRate = parseFloat(txMatch[1]);
+
+    var hasData = info.ssid || info.phy || info.channel || info.txRate || info.rssi;
+    return hasData ? info : null;
+  }
+
+  function parseConnectionInfo(text) {
+    var isMacFormat = /PHY Mode|Current Network Information|system_profiler/i.test(text);
+    if (isMacFormat) {
+      var mac = parseMac(text);
+      if (mac) return mac;
+    }
+    var win = parseWindows(text);
+    if (win) return win;
+    var mac2 = parseMac(text);
+    if (mac2) return mac2;
+    return null;
+  }
+
+  function normalizeBand(band) {
+    if (!band) return null;
+    if (/2\.4/.test(band)) return "2.4GHz";
+    if (/^5/.test(band)) return "5GHz";
+    if (/^6/.test(band)) return "6GHz";
+    return band;
+  }
+
+  function phyRank(phy) {
+    if (!phy) return null;
+    if (/be/i.test(phy)) return 7;
+    if (/ax/i.test(phy)) return 6;
+    if (/ac/i.test(phy)) return 5;
+    if (/n/i.test(phy)) return 4;
+    return 3;
+  }
+
+  function buildResults(info, actualMbps) {
+    var results = [];
+    var band = normalizeBand(info.band);
+    var linkDown = info.rxRate;
+    var linkUp = info.txRate;
+    var linkMax = linkDown || linkUp || null;
+
+    // 1. 2.4GHz吸着
+    if (band === "2.4GHz" && linkMax !== null && linkMax < 600) {
+      results.push({
+        type: "warn",
+        title: "2.4GHz帯に吸着している",
+        desc: "本来もっと速い5GHz帯があるはずなのに、2.4GHz帯を掴んだまま接続している。",
+        fixes: [
+          "ルーターの近くなら一度Wi-Fiをオフ→オンして5GHzを掴み直す",
+          "Windows: デバイスマネージャー→Wi-Fiアダプター→詳細設定→「優先バンド」を5GHz優先に",
+          "Mac: システム設定→Wi-Fi→詳細→5GHzのSSIDを上位に",
+          "それでもダメならルーターでSSIDを帯域別に分ける"
+        ]
+      });
+    }
+
+    // 2. リンク速度の非対称
+    if (linkDown !== null && linkUp !== null && linkDown > 0 && linkUp > 0) {
+      var smaller = Math.min(linkDown, linkUp);
+      var larger = Math.max(linkDown, linkUp);
+      if (smaller < larger * 0.4) {
+        results.push({
+          type: "warn",
+          title: "リンク速度が受信/送信で大きく非対称",
+          desc: "ドライバーかルーターのファームウェアの不具合の典型パターン。",
+          fixes: [
+            "ルーターの管理画面でファームウェア更新",
+            "PCのWi-Fiドライバー更新",
+            "ルーター再起動"
+          ]
+        });
+      }
+    }
+
+    // 3. 実測がリンク速度に対して低すぎ
+    if (actualMbps !== null && linkMax !== null && actualMbps < linkMax * 0.35) {
+      results.push({
+        type: "warn",
+        title: "電波は速いのに実測が出ていない",
+        desc: "無線区間より先（ルーター設定・中継器の折り返し・回線側）にボトルネックがある。",
+        fixes: [
+          "ルーターのファームウェア更新",
+          "中継器経由なら中継器の設置場所と接続帯を確認",
+          "ルーター直近で再測定して切り分け"
+        ]
+      });
+    }
+
+    // 4. 電波が弱い
+    var weakSignal = (info.signalPct !== null && info.signalPct < 50) || (info.rssi !== null && info.rssi < -70);
+    if (weakSignal) {
+      results.push({
+        type: "warn",
+        title: "電波強度が不足",
+        desc: "受信できているものの、電波そのものが弱い状態。",
+        fixes: [
+          "ルーター/中継器との間の障害物を減らす",
+          "中継器は「親機と部屋の中間」に置く",
+          "5GHzで弱いなら2.4GHzの方が安定する場所もある"
+        ]
+      });
+    }
+
+    // 5. 古い規格
+    var rank = phyRank(info.phy);
+    if (rank !== null && rank <= 4) {
+      results.push({
+        type: "warn",
+        title: "Wi-Fi規格が古い(Wi-Fi 4以下)",
+        desc: "これは設定でなく機材の限界。ただし子機側だけ古い場合はUSB子機で安く直せる。",
+        fixes: [
+          "子機（PC側）がボトルネックならUSB Wi-Fi子機への交換を検討",
+          "親機が古い場合はここが実質的な上限"
+        ]
+      });
+    }
+
+    // 6. チャネル幅が狭い
+    if (info.bandwidth !== null && info.bandwidth <= 40 && band === "5GHz") {
+      results.push({
+        type: "warn",
+        title: "チャネル幅が狭い",
+        desc: "5GHz帯なのにチャネル幅が40MHz以下に制限されている。",
+        fixes: [
+          "ルーターのチャネル幅設定(80MHz/160MHz)を確認"
+        ]
+      });
+    }
+
+    // 7. 問題なし判定
+    if (results.length === 0 && actualMbps !== null && linkMax !== null && actualMbps >= linkMax * 0.6) {
+      results.push({
+        type: "ok",
+        title: "大きなボトルネックは見つからず",
+        desc: "今の環境はほぼ上限が出ている。ここから先は有線接続か機材アップグレードの領域。",
+        fixes: []
+      });
+    }
+
+    return results;
+  }
+
+  function renderResults(results) {
+    var container = document.getElementById("resultCards");
+    container.innerHTML = "";
+    results.forEach(function (r) {
+      var card = document.createElement("div");
+      card.className = "result-card " + r.type;
+      var html = "<p class=\"result-title\">" + escapeHtml(r.title) + "</p>";
+      html += "<p class=\"result-desc\">" + escapeHtml(r.desc) + "</p>";
+      if (r.fixes && r.fixes.length > 0) {
+        html += "<ol class=\"result-fix\">";
+        r.fixes.forEach(function (f) {
+          html += "<li>" + escapeHtml(f) + "</li>";
+        });
+        html += "</ol>";
+      }
+      card.innerHTML = html;
+      container.appendChild(card);
+    });
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderInfoTable(info, actualMbps) {
+    var table = document.getElementById("infoTable");
+    var na = "取得できず";
+    var rows = [
+      ["Wi-Fi規格", info.phy || na],
+      ["周波数帯", normalizeBand(info.band) || na],
+      ["チャネル", info.channel !== null ? String(info.channel) : na],
+      ["リンク速度（受信）", info.rxRate !== null ? info.rxRate + " Mbps" : na],
+      ["リンク速度（送信）", info.txRate !== null ? info.txRate + " Mbps" : na],
+      ["電波強度", info.signalPct !== null ? info.signalPct + "%" : (info.rssi !== null ? info.rssi + " dBm" : na)],
+      ["実測値", actualMbps !== null ? actualMbps + " Mbps" : na]
+    ];
+    var html = "";
+    rows.forEach(function (row) {
+      html += "<tr><th>" + escapeHtml(row[0]) + "</th><td>" + escapeHtml(row[1]) + "</td></tr>";
+    });
+    table.innerHTML = html;
+  }
+
+  function buildShareUrl(actualMbps, results) {
+    var judgement = "良好";
+    if (results.length > 0 && results[0].type === "warn") {
+      judgement = results[0].title;
+    } else if (results.length > 0 && results[0].type === "ok") {
+      judgement = "問題なし";
+    } else {
+      judgement = "診断不能";
+    }
+    var speedText = actualMbps !== null ? actualMbps + "Mbps" : "計測なし";
+    var text = "Wi-Fi診断やってみた。実測" + speedText + "、判定: " + judgement + "。設定だけでまだ速くなるらしい";
+    var url = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(location.href);
+    return url;
+  }
+
+  function showParseFailure() {
+    var container = document.getElementById("resultCards");
+    container.innerHTML = "<div class=\"parse-fail\">読み取れなかった。コマンドの結果を最初の行から最後まで全部貼り付けているか確認して。それでも読み取れない場合は「AIに丸ごと任せたい人へ」のセクションからClaude Codeに任せるのがおすすめ。</div>";
+    document.getElementById("infoTable").innerHTML = "";
+    var shareBtn = document.getElementById("shareBtn");
+    shareBtn.style.display = "none";
+  }
+
+  document.getElementById("diagnoseBtn").addEventListener("click", function () {
+    var pasted = document.getElementById("pasteArea").value;
+    var speedRaw = document.getElementById("speedInput").value;
+    var speedUnit = document.getElementById("speedUnit").value;
+    var actualMbps = speedRaw !== "" ? toMbps(parseFloat(speedRaw), speedUnit) : null;
+
+    var resultArea = document.getElementById("resultArea");
+    resultArea.style.display = "block";
+
+    var info = parseConnectionInfo(pasted);
+
+    if (!info) {
+      showParseFailure();
+      resultArea.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    var shareBtn = document.getElementById("shareBtn");
+    shareBtn.style.display = "inline-block";
+
+    var results = buildResults(info, actualMbps);
+    if (results.length === 0) {
+      results = [{
+        type: "ok",
+        title: "大きなボトルネックは見つからず",
+        desc: "今の環境はほぼ上限が出ている。ここから先は有線接続か機材アップグレードの領域。",
+        fixes: []
+      }];
+    }
+    renderResults(results);
+    renderInfoTable(info, actualMbps);
+    shareBtn.href = buildShareUrl(actualMbps, results);
+
+    resultArea.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+})();
+</script>
+</body>
+</html>
