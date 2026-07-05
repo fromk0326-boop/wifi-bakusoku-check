@@ -218,6 +218,12 @@
     flex-shrink: 0;
   }
   .copy-btn:hover { background: #2E3A34; }
+  .code-block code { user-select: all; cursor: pointer; }
+  .cmd-note {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin: 6px 0 0;
+  }
   .copy-btn-block {
     display: block;
     margin-left: auto;
@@ -377,19 +383,18 @@
         <button class="os-tab" id="tabMac" type="button">Mac</button>
       </div>
       <div class="os-panel active" id="panelWin">
-        <p class="step-desc">スタートボタンを右クリック →「ターミナル」を開いて、下のコマンドを貼り付けてEnter。</p>
+        <p class="step-desc">Windowsの「ターミナル」（スタートボタンを右クリックで開ける）で、次のコマンドを実行する。コマンドはクリックすると全選択できる。</p>
         <div class="code-block">
           <code>netsh wlan show interfaces</code>
-          <button class="copy-btn" data-copy="netsh wlan show interfaces" type="button">コピー</button>
         </div>
       </div>
       <div class="os-panel" id="panelMac">
-        <p class="step-desc">「ターミナル」アプリ（アプリケーション → ユーティリティ）を開いて、下のコマンドを貼り付けてEnter。</p>
+        <p class="step-desc">「ターミナル」アプリ（アプリケーション → ユーティリティ）で、次のコマンドを実行する。コマンドはクリックすると全選択できる。</p>
         <div class="code-block">
           <code>system_profiler SPAirPortDataType</code>
-          <button class="copy-btn" data-copy="system_profiler SPAirPortDataType" type="button">コピー</button>
         </div>
       </div>
+      <p class="cmd-note">上のコマンドは、今のWi-Fi接続情報を表示するだけの読み取り専用コマンド。設定の変更や、ソフトのダウンロード・インストールは一切行わない。</p>
       <p class="step-desc" style="margin-top:10px;">出てきた結果を全部コピーして、下に貼り付け。</p>
     </div>
 
@@ -456,6 +461,7 @@
   <footer>
     <p>作った人: 畠山謙人（税理士・公認会計士）<br><a href="https://x.com/kandmybike" target="_blank" rel="noopener">@kandmybike</a></p>
     <p>このサイトは診断結果の正確性を保証するものではない。設定変更は自己責任で。</p>
+    <p>ソースコードは<a href="https://github.com/fromk0326-boop/wifi-bakusoku-check" target="_blank" rel="noopener">GitHubで公開</a>。診断はこのページ内のJavaScriptだけで完結し、外部へのデータ送信・ダウンロード・インストールは一切ない。</p>
     <p>アクセス数のみ計測（GoatCounter・Cookie不使用）。診断のために入力・貼り付けたデータは一切送信しない。</p>
   </footer>
 
@@ -496,12 +502,6 @@
       /* クリップボード権限がない環境では静かに失敗 */
     });
   }
-
-  document.querySelectorAll(".copy-btn[data-copy]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      copyText(btn.getAttribute("data-copy"), btn);
-    });
-  });
 
   document.getElementById("copyPromptBtn").addEventListener("click", function () {
     var btn = document.getElementById("copyPromptBtn");
